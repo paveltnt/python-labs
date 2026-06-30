@@ -1,23 +1,18 @@
-from app.db.db import SessionLocal
-from app.db import crud
+from fastapi import FastAPI
+from app.api import books, categories
+from app.db.db import engine, Base
 
-def main():
-    # Тот самый код из прошлой лабы
-    print("Hello, World!")
-    
-    # Чтение данных из БД
-    db = SessionLocal()
-    try:
-        books = crud.get_books(db)
-        print("\n=== СПИСОК КНИГ ИЗ БАЗЫ ДАННЫХ ===")
-        for book in books:
-            print(f"Категория: {book.category.title}")
-            print(f"Название: {book.title}")
-            print(f"Цена: {book.price} руб.")
-            print(f"Описание: {book.description}")
-            print("-" * 30)
-    finally:
-        db.close()
+# Создаем таблицы в БД, если их еще нет
+Base.metadata.create_all(bind=engine)
 
-if __name__ == "__main__":
-    main()
+# Инициализируем FastAPI
+app = FastAPI(title="Bookstore API")
+
+# Подключаем роутеры
+app.include_router(categories.router)
+app.include_router(books.router)
+
+# Проверочный эндпоинт
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "message": "API is running!"}
